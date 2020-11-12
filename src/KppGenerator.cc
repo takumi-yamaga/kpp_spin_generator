@@ -7,7 +7,8 @@ KppGenerator::KppGenerator()
   kpp_spin_ = 0;
   kpp_parity_ = -1;
 
-  lv_target_ = TLorentzVector(0.0, 0.0, 0.0, kThreeHeMass);
+  lv_target_ = TLorentzVector(0.0, 0.0, 0.0, 0.0);
+  lv_target_.SetVectM(TVector3(0.,0.,0.),kThreeHeMass);
 
 	f_kpp_mass_ = new TF1("f_kpp_mass","([1]*[1]/4.) / ( (x-[0])*(x-[0]) + [1]*[1]/4)",2.,3.);
   f_kpp_mass_->SetParameter(0,2.327518e+00);
@@ -23,7 +24,8 @@ KppGenerator::KppGenerator(Int_t kpp_spin, Int_t kpp_parity)
   kpp_spin_ = kpp_spin;
   kpp_parity_ = kpp_parity;
 
-  lv_target_ = TLorentzVector(0.0, 0.0, 0.0, kThreeHeMass);
+  lv_target_ = TLorentzVector(0.0, 0.0, 0.0, 0.0);
+  lv_target_.SetVectM(TVector3(0.,0.,0.),kThreeHeMass);
 
 	f_kpp_mass_ = new TF1("f_kpp_mass","([1]*[1]/4.) / ( (x-[0])*(x-[0]) + [1]*[1]/4)",2.,3.);
   f_kpp_mass_->SetParameter(0,2.327518e+00);
@@ -71,11 +73,11 @@ void KppGenerator::KppZeroMinusDecay()
 {
   // L-direction
   Double_t cos_theta_l = random_->Uniform(-1.,1.);
-  Double_t sin_theta_l = 1. - cos_theta_l*cos_theta_l;
+  Double_t sin_theta_l = sqrt(1. - cos_theta_l*cos_theta_l);
   Double_t phi_l = random_->Uniform(-TMath::Pi(),TMath::Pi());
   vec_reference_direction_ = TVector3(sin_theta_l*cos(phi_l),sin_theta_l*sin(phi_l),cos_theta_l);
 
-  // ml
+  // ml (of P-wave decay)
   Double_t random_ml = random_->Uniform(0.,3.);
   if(random_ml<1.){
     ml_ = -1;
@@ -87,10 +89,9 @@ void KppGenerator::KppZeroMinusDecay()
     ml_ = 1;
   }
 
-  // momentum directions
+  // momentum directions (P-wave decay)
   Double_t cos_theta_decay = -999.;
-  switch (ml_){
-    case -1:
+  if(ml_==-1){
       while(true){
         Double_t val_cos_theta = random_->Uniform(-1.,1.);
         Double_t val_random = random_->Uniform();
@@ -99,7 +100,8 @@ void KppGenerator::KppZeroMinusDecay()
           break;
         }
       }
-    case 0:
+  }
+  if(ml_==0){
       while(true){
         Double_t val_cos_theta = random_->Uniform(-1.,1.);
         Double_t val_random = random_->Uniform();
@@ -108,7 +110,8 @@ void KppGenerator::KppZeroMinusDecay()
           break;
         }
       }
-    case 1:
+  }
+  if(ml_==1){
       while(true){
         Double_t val_cos_theta = random_->Uniform(-1.,1.);
         Double_t val_random = random_->Uniform();
@@ -117,8 +120,6 @@ void KppGenerator::KppZeroMinusDecay()
           break;
         }
       }
-    default:
-      break;
   }
   Double_t phi_decay = random_->Uniform(-TMath::Pi(),TMath::Pi());
   TVector3 vec_decay_direction = vec_reference_direction_;
@@ -128,37 +129,135 @@ void KppGenerator::KppZeroMinusDecay()
   vec_decay_direction.Rotate(phi_decay,vec_reference_direction_);
 
   Double_t momentum_decay = sqrt( (lv_kpp_.M2()-(kLambdaMass+kProtonMass)*(kLambdaMass+kProtonMass))*(lv_kpp_.M2()-(kLambdaMass-kProtonMass)*(kLambdaMass-kProtonMass)) )/2./lv_kpp_.M();
+
   TVector3 vec_lambda = momentum_decay*vec_decay_direction;
   TVector3 vec_proton = -vec_lambda;
 
-  lv_lambda_ = TLorentzVector(vec_lambda,kLambdaMass);
-  lv_proton_ = TLorentzVector(vec_proton,kProtonMass);
+  lv_lambda_.SetVectM(vec_lambda,kLambdaMass);
+  lv_proton_.SetVectM(vec_proton,kProtonMass);
 
   TVector3 vec_boost_kpp = lv_kpp_.BoostVector();
   lv_lambda_.Boost(vec_boost_kpp);
   lv_proton_.Boost(vec_boost_kpp);
 
   // spin directions
-  switch (ml_){
-    case -1:
+  if(ml_==-1){
+    vec_lambda_spin_direction_ = vec_reference_direction_;
+    vec_proton_spin_direction_ = vec_reference_direction_;
+  }
+  if(ml_==0){
+    if(random_->Uniform()<0.5){
       vec_lambda_spin_direction_ = vec_reference_direction_;
-      vec_proton_spin_direction_ = vec_reference_direction_;
-      break;
-    case 0:
-      if(random_->Uniform()<0.5){
-        vec_lambda_spin_direction_ = vec_reference_direction_;
-      }
-      else{
-        vec_lambda_spin_direction_ = -vec_reference_direction_;
-      }
-      vec_proton_spin_direction_ = -vec_lambda_spin_direction_;
-      break;
-    case 1:
+    }
+    else{
       vec_lambda_spin_direction_ = -vec_reference_direction_;
-      vec_proton_spin_direction_ = -vec_reference_direction_;
-      break;
-    default:
-      break;
+    }
+    vec_proton_spin_direction_ = -vec_lambda_spin_direction_;
+  }
+  if(ml_==1){
+    vec_lambda_spin_direction_ = -vec_reference_direction_;
+    vec_proton_spin_direction_ = -vec_reference_direction_;
+  }
+
+  return;
+}
+
+void KppGenerator::KppZeroPlusDecay()
+{
+  // reference direction (isotropic)
+  Double_t cos_theta_ref = random_->Uniform(-1.,1.);
+  Double_t sin_theta_ref = sqrt(1. - cos_theta_ref*cos_theta_ref);
+  Double_t phi_ref = random_->Uniform(-TMath::Pi(),TMath::Pi());
+  vec_reference_direction_ = TVector3(sin_theta_ref*cos(phi_ref),sin_theta_ref*sin(phi_ref),cos_theta_ref);
+
+  // ml is always 0 (S-wave decay)
+  ml_ = 0;
+
+  // momentum directions (isotropic due to S-wave decay)
+  Double_t cos_theta_decay = random_->Uniform(-1.,1.);
+  Double_t sin_theta_decay = sqrt(1. - cos_theta_decay*cos_theta_decay);
+  Double_t phi_decay = random_->Uniform(-TMath::Pi(),TMath::Pi());
+  TVector3 vec_decay_direction = TVector3(sin_theta_decay*cos(phi_decay),sin_theta_decay*sin(phi_decay),cos_theta_decay);
+
+  Double_t momentum_decay = sqrt( (lv_kpp_.M2()-(kLambdaMass+kProtonMass)*(kLambdaMass+kProtonMass))*(lv_kpp_.M2()-(kLambdaMass-kProtonMass)*(kLambdaMass-kProtonMass)) )/2./lv_kpp_.M();
+
+  TVector3 vec_lambda = momentum_decay*vec_decay_direction;
+  TVector3 vec_proton = -vec_lambda;
+
+  lv_lambda_.SetVectM(vec_lambda,kLambdaMass);
+  lv_proton_.SetVectM(vec_proton,kProtonMass);
+
+  TVector3 vec_boost_kpp = lv_kpp_.BoostVector();
+  lv_lambda_.Boost(vec_boost_kpp);
+  lv_proton_.Boost(vec_boost_kpp);
+
+  // spin directions (always antiparallel)
+  if(random_->Uniform()<0.5){
+    vec_lambda_spin_direction_ = vec_reference_direction_;
+  }
+  else{
+    vec_lambda_spin_direction_ = -vec_reference_direction_;
+  }
+  vec_proton_spin_direction_ = -vec_lambda_spin_direction_;
+
+  return;
+}
+
+void KppGenerator::KppOnePlusDecay()
+{
+  // reference direction (isotropic)
+  Double_t cos_theta_ref = random_->Uniform(-1.,1.);
+  Double_t sin_theta_ref = sqrt(1. - cos_theta_ref*cos_theta_ref);
+  Double_t phi_ref = random_->Uniform(-TMath::Pi(),TMath::Pi());
+  vec_reference_direction_ = TVector3(sin_theta_ref*cos(phi_ref),sin_theta_ref*sin(phi_ref),cos_theta_ref);
+
+  // ml (of J)
+  Double_t random_ml = random_->Uniform(0.,3.);
+  if(random_ml<1.){
+    ml_ = -1;
+  }
+  else if(random_ml<2.){
+    ml_ = 0;
+  }
+  else{
+    ml_ = 1;
+  }
+
+  // momentum directions (isotropic due to S-wave decay)
+  Double_t cos_theta_decay = random_->Uniform(-1.,1.);
+  Double_t sin_theta_decay = sqrt(1. - cos_theta_decay*cos_theta_decay);
+  Double_t phi_decay = random_->Uniform(-TMath::Pi(),TMath::Pi());
+  TVector3 vec_decay_direction = TVector3(sin_theta_decay*cos(phi_decay),sin_theta_decay*sin(phi_decay),cos_theta_decay);
+
+  Double_t momentum_decay = sqrt( (lv_kpp_.M2()-(kLambdaMass+kProtonMass)*(kLambdaMass+kProtonMass))*(lv_kpp_.M2()-(kLambdaMass-kProtonMass)*(kLambdaMass-kProtonMass)) )/2./lv_kpp_.M();
+
+  TVector3 vec_lambda = momentum_decay*vec_decay_direction;
+  TVector3 vec_proton = -vec_lambda;
+
+  lv_lambda_.SetVectM(vec_lambda,kLambdaMass);
+  lv_proton_.SetVectM(vec_proton,kProtonMass);
+
+  TVector3 vec_boost_kpp = lv_kpp_.BoostVector();
+  lv_lambda_.Boost(vec_boost_kpp);
+  lv_proton_.Boost(vec_boost_kpp);
+
+  // spin directions
+  if(ml_==-1){
+    vec_lambda_spin_direction_ = -vec_reference_direction_;
+    vec_proton_spin_direction_ = -vec_reference_direction_;
+  }
+  if(ml_==0){
+    if(random_->Uniform()<0.5){
+      vec_lambda_spin_direction_ = vec_reference_direction_;
+    }
+    else{
+      vec_lambda_spin_direction_ = -vec_reference_direction_;
+    }
+    vec_proton_spin_direction_ = -vec_lambda_spin_direction_;
+  }
+  if(ml_==1){
+    vec_lambda_spin_direction_ = vec_reference_direction_;
+    vec_proton_spin_direction_ = vec_reference_direction_;
   }
 
   return;

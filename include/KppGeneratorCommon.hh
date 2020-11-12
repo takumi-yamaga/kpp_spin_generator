@@ -21,5 +21,6 @@ const Double_t kLightVelocity = 29.97; // cm/ns
 
 const Double_t kMaxWeightTowBody = 1.0;
 const Double_t kMaxWeightThreeBody = 0.5;
+const Double_t kMaxRatioDecay = 3.5;
 
 #endif

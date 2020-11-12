@@ -39,6 +39,8 @@ class KppGenerator
 
   private:
     void KppZeroMinusDecay();
+    void KppZeroPlusDecay();
+    void KppOnePlusDecay();
     TRandom3* random_;
 
     TF1* f_kpp_mass_;

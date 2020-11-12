@@ -20,31 +20,36 @@ void LambdaDecay::Generate(TLorentzVector& lv_lambda,TVector3& vec_lambda_spin_d
 {
   lv_lambda_ = lv_lambda;
   vec_lambda_spin_direction_ = vec_lambda_spin_direction;
-  Double_t phi_spin = vec_lambda_spin_direction_.Phi();
+  TVector3 vec_decay_direction(0.,0.,0.);
 
   // momentum directions
-  Double_t cos_theta_decay = -999.;
   while(true){
-    Double_t val_cos_theta = random_->Uniform(-1.,1.);
-    Double_t val_random = random_->Uniform(0.,1.+alpha_);
-    if(1.+alpha_*val_cos_theta>val_random){
-      cos_theta_decay = val_cos_theta;
+    Double_t cos_theta_decay = random_->Uniform(-1.,1.);
+    Double_t sin_theta_decay = sqrt(1. - cos_theta_decay*cos_theta_decay);
+    Double_t phi_decay = random_->Uniform(-TMath::Pi(),TMath::Pi());
+    vec_decay_direction = TVector3(sin_theta_decay*cos(phi_decay),sin_theta_decay*sin(phi_decay),cos_theta_decay);
+
+    Double_t cos_theta_spin = random_->Uniform(-1.,1.);
+    Double_t sin_theta_spin = sqrt(1. - cos_theta_spin*cos_theta_spin);
+    Double_t phi_spin = random_->Uniform(-TMath::Pi(),TMath::Pi());
+    vec_proton_spin_direction_ = TVector3(sin_theta_spin*cos(phi_spin),sin_theta_spin*sin(phi_spin),cos_theta_spin);
+
+    Double_t val_ratio = 1. + gamma_*vec_proton_spin_direction_.Dot(vec_lambda_spin_direction_)
+      + (1.-gamma_)*vec_proton_spin_direction_.Dot(vec_decay_direction)*vec_lambda_spin_direction_.Dot(vec_decay_direction)
+      + alpha_*(vec_proton_spin_direction_.Dot(vec_decay_direction)+vec_lambda_spin_direction_.Dot(vec_decay_direction))
+      + beta_*vec_decay_direction.Dot(vec_proton_spin_direction_.Cross(vec_lambda_spin_direction_));
+    Double_t val_random = random_->Uniform(0.,kMaxRatioDecay);
+    if(val_ratio>val_random){
       break;
     }
   }
-  Double_t phi_decay = random_->Uniform(-TMath::Pi(),TMath::Pi());
-  TVector3 vec_decay_direction = vec_lambda_spin_direction_;
-  vec_decay_direction.RotateZ(-phi_spin);
-  vec_decay_direction.RotateY(TMath::ACos(cos_theta_decay));
-  vec_decay_direction.RotateZ(phi_spin);
-  vec_decay_direction.Rotate(phi_decay,vec_lambda_spin_direction_);
-  
+
   Double_t momentum_decay = sqrt( (lv_lambda_.M2()-(kProtonMass+kPiMass)*(kProtonMass+kPiMass))*(lv_lambda_.M2()-(kProtonMass-kPiMass)*(kProtonMass-kPiMass)) )/2./lv_lambda_.M();
   TVector3 vec_proton = momentum_decay*vec_decay_direction;
   TVector3 vec_pim = -vec_proton;
 
-  lv_proton_ = TLorentzVector(vec_proton,kProtonMass);
-  lv_pim_ = TLorentzVector(vec_pim,kPiMass);
+  lv_proton_.SetVectM(vec_proton,kProtonMass);
+  lv_pim_.SetVectM(vec_pim,kPiMass);
 
   TVector3 vec_boost_lambda = lv_lambda_.BoostVector();
   lv_proton_.Boost(vec_boost_lambda);
