@@ -47,7 +47,7 @@ void Analyzer::CreateHistograms()
     new TH1F(Form("lambda_spin_dot_proton_from_lambda_spin%s",ml_name[i_ml].data()),"lambda spin dot proton from lambda momentum;#font[12]{S}_{#Lambda}#upoint#font[12]{S}_{#font[12]{p} from #Lambda};Counts",100,-1.001,1.001);
     new TH1F(Form("boost_lambda_dot_proton_from_lambda_spin%s",ml_name[i_ml].data()),"lambda boost vector dot proton from lambda spin;#font[12]{p}_{#Lambda}^{#Lambda#font[12]{p} rest}#upoint#font[12]{S}_{#font[12]{p} form #Lambda};Counts",100,-1.001,1.001);
     new TH1F(Form("proton_spin_dot_proton_from_lambda_spin%s",ml_name[i_ml].data()),"proton spin dot proton from lambda spin;#font[12]{S}_{#font[12]{p}}#upoint#font[12]{S}_{#font[12]{p} from #Lambda};Counts",100,-1.001,1.001);
-    new TH1F(Form("proton_spin_dot_proton_from_lambda_momentum%s",ml_name[i_ml].data()),"proton spin dot proton from lambda momentum;#font[12]{S}_{#font[12]{p}}#upoint#font[12]{p}_{#font[12]{p}}^{#Lambda rest};Counts",100,-1.001,1.001);
+    new TH1F(Form("proton_spin_dot_proton_from_lambda_momentum%s",ml_name[i_ml].data()),"proton spin dot proton from lambda momentum;#font[12]{S}_{#font[12]{p}}#upoint#font[12]{p}_{#font[12]{p} from #Lambda}^{#Lambda rest};Counts",100,-1.001,1.001);
   }
 }
 
@@ -78,7 +78,7 @@ void Analyzer::Analysis(KppGenerator* kpp_generator, LambdaDecay* lambda_decay)
   Fill("lp_mass_vs_lp_momtrans",lv_lp.M(),lv_lp.P());
 
 
-  Int_t ml = kpp_generator->ML();
+  Int_t ml_decay = kpp_generator->MLDecay();
   TVector3 vec_reference_direction = kpp_generator->VecReference().Unit();
   TVector3 vec_lambda_spin_direction = kpp_generator->VecLambdaSpin().Unit();
   TVector3 vec_proton_spin_direction = kpp_generator->VecProtonSpin().Unit();
@@ -100,13 +100,13 @@ void Analyzer::Analysis(KppGenerator* kpp_generator, LambdaDecay* lambda_decay)
 
   Bool_t fill_flags[8] = {false};
   fill_flags[0] = true;
-  if(ml==0){
+  if(ml_decay==0){
     fill_flags[1] = true;
   }
-  if(ml==1){
+  if(ml_decay==1){
     fill_flags[2] = true;
   }
-  if(ml==-1){
+  if(ml_decay==-1){
     fill_flags[3] = true;
   }
 
@@ -115,13 +115,13 @@ void Analyzer::Analysis(KppGenerator* kpp_generator, LambdaDecay* lambda_decay)
 
   if(cos_select_ll<boost_lambda_dot_proton_from_lambda_momentum&&boost_lambda_dot_proton_from_lambda_momentum<cos_select_ul){
     fill_flags[4] = true;
-    if(ml==0){
+    if(ml_decay==0){
       fill_flags[5] = true;
     }
-    if(ml==1){
+    if(ml_decay==1){
       fill_flags[6] = true;
     }
-    if(ml==-1){
+    if(ml_decay==-1){
       fill_flags[7] = true;
     }
   }

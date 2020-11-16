@@ -10,11 +10,11 @@
 // -----=====-----=====----- //
 int main(int argc, char* argv[])
 {	
-  Int_t kpp_spin = 0; 
-  Int_t kpp_parity = -1; 
+  Int_t kpp_spin = 1; 
+  Int_t kpp_parity = 1; 
   KppGenerator* kpp_generator = new KppGenerator(kpp_spin,kpp_parity);
   LambdaDecay* lambda_decay = new LambdaDecay();
-  Analyzer* analyzer = new Analyzer("root/kpp_generator.root");
+  Analyzer* analyzer = new Analyzer("root/kpp_generator_one_plus.root");
 
   Double_t beam_momentum = 1.; // GeV/c
   TLorentzVector lv_beam(0.,0.,0.,0.);
@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 
   }
 
-  analyzer->PrintHistograms("fig/kpp_genrator.pdf");
+  analyzer->PrintHistograms("fig/kpp_genrator_one_plus.pdf");
 
   return 0;
 }

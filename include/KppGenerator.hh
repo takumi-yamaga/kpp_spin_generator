@@ -32,13 +32,15 @@ class KppGenerator
 
     Int_t KppSpin(){ return kpp_spin_; }
     Int_t KppParity(){ return kpp_parity_; }
-    Int_t ML(){ return ml_; }
+    Int_t MLDecay(){ return ml_decay_; }
+    Int_t MLSpin(){ return ml_spin_; }
     TVector3 VecReference(){ return vec_reference_direction_; }
     TVector3 VecLambdaSpin(){ return vec_lambda_spin_direction_; }
     TVector3 VecProtonSpin(){ return vec_proton_spin_direction_; }
 
   private:
     void KppZeroMinusDecay();
+    void KppOneMinusDecay();
     void KppZeroPlusDecay();
     void KppOnePlusDecay();
     TRandom3* random_;
@@ -57,7 +59,8 @@ class KppGenerator
 
     Int_t kpp_spin_;
     Int_t kpp_parity_;
-    Int_t ml_;
+    Int_t ml_decay_;
+    Int_t ml_spin_;
     TVector3 vec_reference_direction_;
     TVector3 vec_lambda_spin_direction_;
     TVector3 vec_proton_spin_direction_;
